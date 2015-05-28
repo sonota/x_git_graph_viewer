@@ -8,6 +8,7 @@ class Git
 
   def initialize dir
     @dir = File.expand_path(dir)
+    @branches = []
   end
 
   def read_file path
@@ -23,8 +24,12 @@ class Git
   def to_hash
     {
       :dir => @dir,
-      :branches => get_branches()
+      :branches => @branches
     }
+  end
+  
+  def load
+    @branches = get_branches()
   end
 
 end
@@ -33,5 +38,6 @@ end
 if __FILE__ == $0
   dir = ARGV[0]
   git = Git.new(dir)
+  git.load
   p git.to_hash
 end
