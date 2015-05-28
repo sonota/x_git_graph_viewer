@@ -1,6 +1,39 @@
 # -*- coding: utf-8 -*-
 
+require "zlib"
+
 class Commit
+
+  attr_accessor :oid, :parents, :msg, :committer, :author
+
+  def initialize
+    @parents = []
+  end
+
+  def to_hash
+    {
+      :oid => @oid,
+      :parents => @parents,
+      :msg => @msg,
+      :committer => @committer,
+      :author => @author
+    }
+  end
+
+  def self.parse str
+    c = Commit.new
+    str.each_line{|line|
+      case line
+      when /^parent (.+)/    ; c.parents << $1
+      when /^committer (.+)/ ; c.committer = $1
+      when /^author (.+)/    ; c.author = $1
+      end
+    }
+
+    msg = str.split("\n\n")[1]
+    c.msg = msg
+    c
+  end
 
 end
 
@@ -9,10 +42,15 @@ class Git
   def initialize dir
     @dir = File.expand_path(dir)
     @branches = []
+    @commits = []
   end
 
   def read_file path
     File.read(File.join(@dir, ".git", path))
+  end
+
+  def read_file_bin path
+    File.binread File.join(@dir, ".git", path)
   end
 
   def get_branches
@@ -24,12 +62,46 @@ class Git
   def to_hash
     {
       :dir => @dir,
-      :branches => @branches
+      :branches => @branches,
+      :commits => @commits
     }
   end
+
+  def read_object_bin oid
+    /^(..)(.+)$/ =~ oid
+    index, name = $1, $2
+    compressed = read_file_bin("objects/#{index}/#{name}")
+    Zlib::Inflate.inflate compressed
+  end
   
+  def read_commit oid
+    bin = read_object_bin(oid)
+    /\A(.+?)\x00(.+)\Z/m =~ bin
+    head, body = $1, $2
+
+    c = Commit.parse(body)
+    c.oid = oid
+    c
+  end
+
+  def load_commits br_name
+    br_head_oid = read_file("refs/heads/#{br_name}")
+    br_head_commit = read_commit(br_head_oid)
+    ret = {}
+    ret[br_head_oid] = br_head_commit
+    ret
+  end
+
   def load
     @branches = get_branches()
+    commits_hash = {}
+    @branches.each do |br_name|
+      temp = load_commits(br_name)
+      commits_hash.merge! temp
+    end
+    @commits = commits_hash.values.map{|commit|
+      commit.to_hash
+    }
   end
 
 end
