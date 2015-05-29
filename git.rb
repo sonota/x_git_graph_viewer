@@ -75,6 +75,10 @@ class Git
   end
   
   def load_commit commits, oid
+    if oid.nil?
+      return commits
+    end
+
     bin = read_object_bin(oid)
     /\A(.+?)\x00(.+)\Z/m =~ bin
     head, body = $1, $2
@@ -83,12 +87,8 @@ class Git
     c.oid = oid
     commits[oid] = c
     
-    if c.parents[0]
-      commits = load_commit(commits, c.parents[0])
-      if c.parents[1]
-        commits = load_commit(commits, c.parents[1])
-      end
-    end
+    commits = load_commit(commits, c.parents[0])
+    commits = load_commit(commits, c.parents[1])
     
     commits
   end
