@@ -94,7 +94,7 @@ class Git
   end
 
   def load_commits br_name
-    br_head_oid = read_file("refs/heads/#{br_name}")
+    br_head_oid = read_file("refs/heads/#{br_name}").chomp
     load_commit({}, br_head_oid)
   end
 
