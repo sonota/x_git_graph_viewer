@@ -75,7 +75,7 @@ class Git
   end
   
   def load_commit commits, oid
-    if oid.nil?
+    if oid.nil? || commits.has_key?(oid)
       return commits
     end
 
