@@ -74,22 +74,28 @@ class Git
     Zlib::Inflate.inflate compressed
   end
   
-  def read_commit oid
+  def load_commit commits, oid
     bin = read_object_bin(oid)
     /\A(.+?)\x00(.+)\Z/m =~ bin
     head, body = $1, $2
 
     c = Commit.parse(body)
     c.oid = oid
-    c
+    commits[oid] = c
+    
+    if c.parents[0]
+      commits = load_commit(commits, c.parents[0])
+      if c.parents[1]
+        commits = load_commit(commits, c.parents[1])
+      end
+    end
+    
+    commits
   end
 
   def load_commits br_name
     br_head_oid = read_file("refs/heads/#{br_name}")
-    br_head_commit = read_commit(br_head_oid)
-    ret = {}
-    ret[br_head_oid] = br_head_commit
-    ret
+    load_commit({}, br_head_oid)
   end
 
   def load
