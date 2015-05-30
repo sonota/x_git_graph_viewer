@@ -114,8 +114,11 @@ end
 
 
 if __FILE__ == $0
+  
+  require "pp"
+
   dir = ARGV[0]
   git = Git.new(dir)
   git.load
-  p git.to_hash
+  pp git.to_hash
 end
