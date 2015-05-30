@@ -63,7 +63,8 @@ class Git
     {
       :dir => @dir,
       :branches => @branches,
-      :commits => @commits
+      :commits => @commits,
+      :head => @head
     }
   end
 
@@ -72,6 +73,11 @@ class Git
     index, name = $1, $2
     compressed = read_file_bin("objects/#{index}/#{name}")
     Zlib::Inflate.inflate compressed
+  end
+
+  def read_head_oid
+    br_name = File.basename(read_file("HEAD").chomp)
+    read_file("refs/heads/#{br_name}").chomp
   end
   
   def load_commit commits, oid
@@ -108,6 +114,7 @@ class Git
     @commits = commits_hash.values.map{|commit|
       commit.to_hash
     }
+    @head = read_head_oid()
   end
 
 end
