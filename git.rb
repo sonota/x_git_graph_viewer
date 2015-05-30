@@ -99,19 +99,18 @@ class Git
     commits
   end
 
-  def load_commits br_name
+  def load_commits commits, br_name
     br_head_oid = read_file("refs/heads/#{br_name}").chomp
-    load_commit({}, br_head_oid)
+    load_commit(commits, br_head_oid)
   end
 
   def load
     @branches = get_branches()
-    commits_hash = {}
+    _commits = {}
     @branches.each do |br_name|
-      temp = load_commits(br_name)
-      commits_hash.merge! temp
+      _commits = load_commits(_commits, br_name)
     end
-    @commits = commits_hash.values.map{|commit|
+    @commits = _commits.values.map{|commit|
       commit.to_hash
     }
     @head = read_head_oid()
