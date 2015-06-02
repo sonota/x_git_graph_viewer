@@ -53,11 +53,42 @@ class Git
     File.binread File.join(@dir, ".git", path)
   end
 
+  def file_path path
+    File.join(@dir, ".git", path)
+  end
+
+  def get_br_cid br_name
+    if File.exist?(file_path("/refs/heads/#{br_name}"))
+      return read_file("/refs/heads/#{br_name}").chomp
+    end
+
+    # fallback
+    # see:
+    #   Git - メインテナンスとデータリカバリ
+    #   https://git-scm.com/book/ja/v1/Git%E3%81%AE%E5%86%85%E5%81%B4-%E3%83%A1%E3%82%A4%E3%83%B3%E3%83%86%E3%83%8A%E3%83%B3%E3%82%B9%E3%81%A8%E3%83%87%E3%83%BC%E3%82%BF%E3%83%AA%E3%82%AB%E3%83%90%E3%83%AA
+
+    str = read_file("packed-refs");
+    cid = nil
+    str.each_line {|line|
+      if %r{.+/(.+)$} =~ line
+        name = $1
+        if name == br_name
+          /^(.+) / =~ line
+          cid = $1
+          break
+        end
+      end
+    }
+    raise "cid for (#{br_name}) not found" if cid.nil?
+    cid
+  end
+
   def get_branches
     Dir.glob(@dir + "/.git/refs/heads/*").map{|path|
       name = File.basename(path)
       {
-        :name => name
+        :name => name,
+        :cid => get_br_cid(name)
       }
     }
   end
