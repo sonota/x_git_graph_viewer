@@ -55,7 +55,10 @@ class Git
 
   def get_branches
     Dir.glob(@dir + "/.git/refs/heads/*").map{|path|
-      File.basename(path)
+      name = File.basename(path)
+      {
+        :name => name
+      }
     }
   end
 
@@ -107,8 +110,8 @@ class Git
   def load
     @branches = get_branches()
     _commits = {}
-    @branches.each do |br_name|
-      _commits = load_commits(_commits, br_name)
+    @branches.each do |br|
+      _commits = load_commits(_commits, br[:name])
     end
     @commits = _commits.values.map{|commit|
       commit.to_hash
