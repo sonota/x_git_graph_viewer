@@ -42,6 +42,7 @@ class Git
   def initialize dir
     @dir = File.expand_path(dir)
     @branches = []
+    @tags = []
     @commits = []
   end
 
@@ -83,6 +84,10 @@ class Git
     cid
   end
 
+  def get_tag_cid br_name
+    read_file("/refs/tags/#{br_name}").chomp
+  end
+
   def get_branches
     Dir.glob(@dir + "/.git/refs/heads/*").map{|path|
       name = File.basename(path)
@@ -93,10 +98,21 @@ class Git
     }
   end
 
+  def get_tags
+    Dir.glob(@dir + "/.git/refs/tags/*").map{|path|
+      name = File.basename(path)
+      {
+        :name => name,
+        :cid => get_tag_cid(name)
+      }
+    }
+  end
+
   def to_hash
     {
       :dir => @dir,
       :branches => @branches,
+      :tags => @tags,
       :commits => @commits,
       :head => @head
     }
@@ -133,16 +149,25 @@ class Git
     commits
   end
 
-  def load_commits commits, br_name
+  def load_commits_br commits, br_name
     br_head_oid = read_file("refs/heads/#{br_name}").chomp
     load_commit(commits, br_head_oid)
   end
 
+  def load_commits_tag commits, tag_name
+    tag_head_oid = read_file("refs/tags/#{tag_name}").chomp
+    load_commit(commits, tag_head_oid)
+  end
+
   def load
     @branches = get_branches()
+    @tags = get_tags()
     _commits = {}
     @branches.each do |br|
-      _commits = load_commits(_commits, br[:name])
+      _commits = load_commits_br(_commits, br[:name])
+    end
+    @tags.each do |tag|
+      _commits = load_commits_tag(_commits, tag[:name])
     end
     @commits = _commits.values.map{|commit|
       commit.to_hash
