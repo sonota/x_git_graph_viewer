@@ -1,1 +1,4 @@
-console.log("TODO");
+function puts(){
+  console.log.apply(console, arguments);
+}
+puts("TODO");
