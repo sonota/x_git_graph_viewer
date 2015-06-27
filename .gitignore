@@ -1,3 +1,4 @@
 .bundle
 vendor
 *~
+/public/js_ext/
