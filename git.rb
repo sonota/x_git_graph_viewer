@@ -4,7 +4,7 @@ require "zlib"
 
 class Commit
 
-  attr_accessor :oid, :parents, :msg, :committer, :author
+  attr_accessor :cid, :parents, :msg, :committer, :author
 
   def initialize
     @parents = []
@@ -12,7 +12,7 @@ class Commit
 
   def to_hash
     {
-      :oid => @oid,
+      :cid => @cid,
       :parents => @parents,
       :msg => @msg,
       :committer => @committer,
@@ -140,7 +140,7 @@ class Git
     head, body = $1, $2
 
     c = Commit.parse(body)
-    c.oid = oid
+    c.cid = oid
     commits[oid] = c
     
     commits = load_commit(commits, c.parents[0])
