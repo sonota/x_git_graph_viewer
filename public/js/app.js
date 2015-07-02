@@ -1,6 +1,28 @@
+var Commit;
+
 function puts(){
   console.log.apply(console, arguments);
 }
+
+
+Commit = (function(){
+  
+  function Commit(){}
+  var __ = Commit.prototype;
+
+  Commit.fromObject = function(o){
+    var c = new Commit();
+    c.author = o.author;
+    c.committer = o.committer;
+    c.msg = o.msg;
+    c.cid = o.cid;
+    c.parents = o.parents;
+    return c;
+  };
+
+  return Commit;
+})();
+
 
 function _api(method, url, params, fnOk, fnNg){
   $.post(url, {
